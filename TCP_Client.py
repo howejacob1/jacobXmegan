@@ -1,3 +1,4 @@
+#icky code repitition
 from re import S
 import socket
 import sys
@@ -17,14 +18,39 @@ def recv_until_newline(something_that_can_recv):
             line += char
     return line
 
+def is_opcode_valid(opcode):
+    valid_opcodes = ["+", "-", "/", "*"]
+    return opcode in valid_opcodes
+
+def send_str(conn, the_string):
+    the_string_with_newline = the_string + "\n"
+    conn.sendall(the_string_with_newline.encode("utf-8"))
+    
+opcode_descs = {620: "Invalid OC",
+                630: "Invalid operands"}
+
 def main(filename):
-    with open("example_data.txt") as file_handle:
-        for line in file_handle.readlines():
+    with open(filename) as file_handle:
+        for example_line in file_handle.read().split("\n"):
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as conn:
                 conn.connect((HOST, PORT))
-                print(f"connected to {HOST}:{PORT}")
-                conn.sendall(line.encode("utf-8"))
-                print(f"got {recv_until_newline(conn)}")
+                send_str(conn, example_line)
+                line = recv_until_newline(conn)
+                status_code, result = line.split()
+                try:
+                    status_code = int(status_code)
+                    if status_code == 200:
+                        print(f"Result is {result}")
+                    else:
+                        print(f"Error {status_code}: {opcode_descs[status_code]}")
+                except ValueError:
+                    print("bad status_code")
+                finally:
+                    conn.close()
+        file_handle.close()
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    if len(sys.argv) > 1:
+        main(sys.argv[1])
+    else:
+        main("example_data.txt")
