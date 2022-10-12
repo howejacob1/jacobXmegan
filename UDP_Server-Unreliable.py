@@ -27,7 +27,8 @@ def send_str(sock, the_string, addr):
 
 buffer_size = 1024*1024
 
-def main():
+def main(percent_chance, seed):
+    random.seed(seed)
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
@@ -38,7 +39,7 @@ def main():
                 bytes, addr = sock.recvfrom(buffer_size)
                 line = bytes.decode("utf-8")
                 line = line.strip()
-                if False:
+                if random.random() < percent_chance:
                     print(f"{line} -> dropped")
                 else:
                     def finish():
@@ -86,4 +87,4 @@ def main():
                 #     # we have the line, now simply do an operation on it 
 
 if __name__=="__main__":
-    main()
+    main(float(sys.argv[1]), sys.argv[2])
